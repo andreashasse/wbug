@@ -16,9 +16,12 @@ line(Module, Line) ->
 
 attached(Pid, Module, Line) ->
     {ok, Meta} = int:attached(Pid),
+    attached(Pid, Module, Line, Meta).
+
+attached(Pid, Module, Line, Meta) ->
     do_code(Module, Line, Pid),
     print_from_meta(Meta),
-    int:meta(Meta, continue).
+    input_loop(Pid, Module, Line, Meta).
 
 do_code(Module, Line, Pid) ->
     Contents = int:contents(Module, Pid),
@@ -28,6 +31,18 @@ do_code(Module, Line, Pid) ->
     ShowLines = lists:sublist(AllLines, LineBefore, LineAfter-LineBefore+1),
     print_code(ShowLines, Line-LineBefore).
 
+%% ---------------------------------------------------------------------------
+%% Input handling
+
+input_loop(Pid, Module, Line, Meta) ->
+    case rm_last(io:get_line("cmd>")) of
+        "c" -> int:meta(Meta, continue);
+        "n" -> int:meta(Meta, next),
+               attached(Pid, Module, Line+1, Meta)
+    end.
+
+rm_last(Str) ->
+    lists:sublist(Str, 1, length(Str)-1).
 
 %% ---------------------------------------------------------------------------
 %% Finding lines to print
