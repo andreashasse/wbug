@@ -16,25 +16,17 @@ line(Module, Line) ->
 
 attached(Pid, Module, Line) ->
     {ok, Meta} = int:attached(Pid),
+    do_code(Module, Line, Pid),
+    print_from_meta(Meta),
+    int:meta(Meta, continue).
+
+do_code(Module, Line, Pid) ->
     Contents = int:contents(Module, Pid),
     AllLines = re:split(Contents, "\n\\d+:", [{return, list}]),
     LineBefore = find_before(AllLines, Line, Line-10, 20),
     LineAfter = find_after(AllLines, Line, LineBefore+20, 20),
     ShowLines = lists:sublist(AllLines, LineBefore, LineAfter-LineBefore+1),
-    io:format("Code~n----~n~s~n",
-              [string:join(fix_lines(ShowLines, Line-LineBefore), "\n")]),
-    io:format("Backtrace?~n---------~n~s~nBindings~n--------~n~s~n",
-              [format_backtraces(int:meta(Meta, backtrace, 3)),
-               format_bindings(int:meta(Meta, bindings, nostack))
-              ]),
-    int:meta(Meta, continue).
-
-fix_lines([], _) -> "";
-fix_lines([Line|Lines], N) ->
-    Token = if N =:= 0 -> ">";
-               true -> " "
-            end,
-    [Token ++ lists:nthtail(3, Line)|fix_lines(Lines, N-1)].
+    print_code(ShowLines, Line-LineBefore).
 
 
 %% ---------------------------------------------------------------------------
@@ -62,6 +54,23 @@ match_after(Line) ->
 
 %% ---------------------------------------------------------------------------
 %% Formating
+
+print_code(Code, Highlight) ->
+    io:format("Code~n----~n~s~n",
+              [string:join(fix_lines(Code, Highlight), "\n")]).
+
+print_from_meta(Meta) ->
+    io:format("Backtrace?~n---------~n~s~nBindings~n--------~n~s~n",
+              [format_backtraces(int:meta(Meta, backtrace, 3)),
+               format_bindings(int:meta(Meta, bindings, nostack))
+              ]).
+
+fix_lines([], _) -> "";
+fix_lines([Line|Lines], N) ->
+    Token = if N =:= 0 -> ">";
+               true -> " "
+            end,
+    [Token ++ lists:nthtail(3, Line)|fix_lines(Lines, N-1)].
 
 format_backtraces(Bts) ->
     lists:map(fun format_backtrace/1, Bts).
