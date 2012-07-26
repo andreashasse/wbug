@@ -1,5 +1,4 @@
 %%% @author Andreas Hasselberg <andreas.hasselberg@wooga.com>
-%%% @copyright (C) 2012, Andreas Hasselberg
 %%% @doc
 %%%  A debugger built at wooga.
 %%% @end
@@ -12,19 +11,21 @@
 line(Module, Line) ->
     int:i(Module),
     int:break(Module, Line),
-    int:auto_attach([break], {?MODULE, attached, [Module, Line]}).
+    int:auto_attach([break], {?MODULE, attached, [Module]}).
 
-attached(Pid, Module, Line) ->
-    {ok, Meta} = int:attached(Pid),
-    attached(Pid, Module, Line, Meta).
-
-attached(Pid, Module, Line, Meta) ->
-    do_code(Module, Line, Pid),
-    print_from_meta(Meta),
-    input_loop(Pid, Module, Line, Meta).
-
-do_code(Module, Line, Pid) ->
+attached(Pid, Module) ->
     Contents = int:contents(Module, Pid),
+    {ok, Meta} = int:attached(Pid),
+    int:meta(Meta, trace, true),
+    do_wait(Meta, Contents).
+
+do_out(Meta, Module, Line, Contents) ->
+    do_code(Module, Line, Contents),
+    print_from_meta(Meta),
+    input_loop(Meta, Contents).
+
+do_code(_Module, Line, Contents) ->
+    %% fixme: check that we are in the same module.
     AllLines = re:split(Contents, "\n\\d+:", [{return, list}]),
     LineBefore = find_before(AllLines, Line, Line-10, 20),
     LineAfter = find_after(AllLines, Line, LineBefore+20, 20),
@@ -34,11 +35,36 @@ do_code(Module, Line, Pid) ->
 %% ---------------------------------------------------------------------------
 %% Input handling
 
-input_loop(Pid, Module, Line, Meta) ->
+input_loop(Meta, Contents) ->
     case rm_last(io:get_line("cmd>")) of
         "c" -> int:meta(Meta, continue);
-        "n" -> int:meta(Meta, next),
-               attached(Pid, Module, Line+1, Meta)
+        "n" -> int:meta(Meta, next);
+        "s" -> int:meta(Meta, stop);
+        _   -> io:format("heh?"), input_loop(Meta, Contents)
+    end,
+    do_wait(Meta, Contents).
+
+do_wait(Meta, Contents) ->
+    receive
+        {Meta, {attached, _Module, _Line, _}} ->
+            do_wait(Meta, Contents);
+        {Meta, {break_at, Module, Line, _}} ->
+            do_out(Meta, Module, Line, Contents),
+            input_loop(Meta, Contents);
+        %% some messages that I don't care about
+        {Meta, {trace, _}} ->
+            do_wait(Meta, Contents);
+        {Meta, {trace_output, _}} ->
+            do_wait(Meta, Contents);
+        {Meta, idle} ->
+            do_wait(Meta, Contents);
+        {_, {exit_at,_,_,_}} ->
+            do_wait(Meta, Contents);
+        {Meta, running} ->
+            do_wait(Meta, Contents);
+        {Meta, Cmd} ->
+            io:format("Not handled message ~p~n", [Cmd]),
+            do_wait(Meta, Contents)
     end.
 
 rm_last(Str) ->
@@ -75,7 +101,7 @@ print_code(Code, Highlight) ->
               [string:join(fix_lines(Code, Highlight), "\n")]).
 
 print_from_meta(Meta) ->
-    io:format("Backtrace?~n---------~n~s~nBindings~n--------~n~s~n",
+    io:format("Call~n----~n~s~nBindings~n--------~n~s~n",
               [format_backtraces(int:meta(Meta, backtrace, 3)),
                format_bindings(int:meta(Meta, bindings, nostack))
               ]).
@@ -122,9 +148,9 @@ match_after_test() ->
 -endif. %% TEST
 
 
-test_manual() ->
-    line(avl, 112),
+manual() ->
+    line(wbug_test, 15),
     spawn(fun() ->
-                  avl:enter(k, v, avl:enter(k3, 3, avl:enter(k, v2, avl:empty()))),
+                  wbug_test:calls(),
                   io:format("done~n")
           end).
