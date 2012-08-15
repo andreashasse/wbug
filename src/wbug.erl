@@ -59,7 +59,8 @@ get_input(Meta, Contents) ->
         "c" -> int:meta(Meta, continue);
         "n" -> int:meta(Meta, next);
         "s" -> int:meta(Meta, stop);
-        _   -> io:format("heh?"), get_input(Meta, Contents)
+        _   -> io:format("heh? (c -> continue, n -> next)~n"),
+               get_input(Meta, Contents)
     end.
 
 rm_last(Str) ->
@@ -69,5 +70,5 @@ manual() ->
     line(wbug_test, 15),
     spawn(fun() ->
                   wbug_test:calls(),
-                  io:format("done~n")
+                  io:format("End of wbug:manual/0~n")
           end).
