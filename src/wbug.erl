@@ -58,8 +58,9 @@ get_input(Meta, Contents) ->
     case rm_last(io:get_line("cmd>")) of
         "c" -> int:meta(Meta, continue);
         "n" -> int:meta(Meta, next);
-%%        "s" -> int:meta(Meta, stop);
-        _   -> io:format("heh? (c -> continue, n -> next)~n"),
+        "s" -> int:meta(Meta, step);
+%%        "q" -> int:meta(Meta, stop);
+        _   -> io:format("heh? (c -> continue, n -> next, s -> step)~n"),
                get_input(Meta, Contents)
     end.
 
