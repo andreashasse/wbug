@@ -26,7 +26,7 @@ do_code(_Module, Line, Contents) ->
     print_code(ShowLines, Line-LineBefore).
 
 print_from_meta(Meta) ->
-    io:format("Call~n----~n~s~nBindings~n--------~n~s~n",
+    io:format("Callstack~n---------~n~s~nBindings~n--------~n~s~n",
               [format_backtraces(int:meta(Meta, backtrace, 3)),
                format_bindings(int:meta(Meta, bindings, nostack))
               ]).
@@ -39,7 +39,7 @@ fix_lines([Line|Lines], N) ->
     [Token ++ lists:nthtail(3, Line)|fix_lines(Lines, N-1)].
 
 format_backtraces(Bts) ->
-    lists:map(fun format_backtrace/1, Bts).
+    string:join(lists:map(fun format_backtrace/1, lists:reverse(Bts)), "\n").
 
 format_backtrace({_Number, {M,F,Args}}) ->
     ArgsStr = string:join([io_lib:format("~p", [Arg]) || Arg <- Args], ", "),
