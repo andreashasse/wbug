@@ -2,6 +2,9 @@
 An terminal debugger for Erlang. 
 This is a prototyp, all help, pull requests and bug reports are welcome.
 
+[![Build Status](https://secure.travis-ci.org/anha0825/wbug.png)](http://travis-ci.org/anha0825/wbug)
+
+
 ## Aims
 * Ease to use over nice interface
 * Not for production use ... Use redbug for that.
