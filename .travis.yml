@@ -1,0 +1,5 @@
+language: erlang
+notifications:
+  email: andreas.hasselberg@gmail.com
+otp_release:
+  - R15B
