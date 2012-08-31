@@ -7,7 +7,7 @@
 -module(wbug).
 
 %% api
--export([line/2]).
+-export([line/2, shit/2]).
 
 %% manual testing
 -export([manual/0]).
@@ -15,11 +15,13 @@
 %% callback for the interpreter
 -export([attached/2]).
 
+-spec line(Module::module(), Line::pos_integer()) -> ok.
 %%@doc setups up a breakpoint and a callback
 line(Module, Line) ->
     int:i(Module),
     int:break(Module, Line),
-    int:auto_attach([break], {?MODULE, attached, [Module]}).
+    int:auto_attach([break], {?MODULE, attached, [Module]}),
+    ok.
 
 %%@doc callback that starts the debugging
 attached(Pid, Module) ->
@@ -73,3 +75,15 @@ manual() ->
                   wbug_test:calls(),
                   io:format("End of wbug:manual/0~n")
           end).
+
+shit(Module, Line) ->
+    case lists:keymember({Module, Line},1, int:all_breaks()) of
+        true -> io:format("not adding"), ok;
+        false -> io:format("adding ~p ~p", [Module, Line]),
+                 spawn(fun() -> wbug:line(Module, Line) end),
+                 timer:sleep(1000),
+                 shit(Module, Line)
+    end.
+
+
+
