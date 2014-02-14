@@ -1,0 +1,3 @@
+:name "wbug_node"
+:node-sname "wbug_node"
+:lib-dirs '("deps")

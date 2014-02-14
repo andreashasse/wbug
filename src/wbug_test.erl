@@ -1,20 +1,13 @@
-%%% @author Andreas Hasselberg <andreas.hasselberg@wooga.com>
-%%% @copyright (C) 2012, Andreas Hasselberg
-%%% @doc
-%%%
-%%% @end
-%%% Created : 26 Jul 2012 by Andreas Hasselberg <andreas.hasselberg@wooga.com>
-
 -module(wbug_test).
 
 -compile(export_all).
 
-
-
 calls() ->
+    io:format("Start of debug fun ~p~n", [self()]),
     CallArg = 3,
     CallRes = test(CallArg),
-    CallRes + 1.
+    CallRes + 1,
+    io:format("End of debug fun ~p~n", [self()]).
 
 test(Arg) ->
     A = Arg + 2,
