@@ -16,7 +16,6 @@ test_new() ->
     wbug_srv:start(),
     line(wbug_test, 6),
     spawn(fun wbug_test:calls/0),
-    spawn(fun wbug_test:calls/0),
     wbug_shell_listner:start().
 
 
